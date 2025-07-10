@@ -46,8 +46,10 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                   hint: Text("Select Doctor"),
                   value: selectedDoctor,
                   items: docs
-                      .map((doc) => DropdownMenuItem(
-                          value: doc['email'], child: Text(doc['name'])))
+                      .map((doc) => DropdownMenuItem<String>(
+                        value: doc['email'] as String,
+                        child: Text(doc['name'] as String),
+                          ))
                       .toList(),
                   onChanged: (val) {
                     setState(() {
