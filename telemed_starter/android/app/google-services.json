@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "656191776456",
+    "project_id": "telemedappflutter",
+    "storage_bucket": "telemedappflutter.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:656191776456:android:6e011602ea3882382927fd",
+        "android_client_info": {
+          "package_name": "com.example.telemed_starter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC13180_JxRTxBQ9EEnbMzyyewRDCpBg70"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
