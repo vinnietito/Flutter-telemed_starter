@@ -51,7 +51,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                         child: Text(doc['name'] as String),
                           ))
                       .toList(),
-                  onChanged: (val) {...
+                  onChanged: (val) {
                     setState(() {
                       selectedDoctor = val;
                     });
