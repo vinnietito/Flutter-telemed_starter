@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../screens/home_screen.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import '../services/auth_service.dart';
+import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -10,65 +8,92 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  String role = 'Patient';
+  final _formKey = GlobalKey<FormState>();
+  final _authService = AuthService();
 
-  void register() async {
-    try {
-      UserCredential userCred = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-              email: emailController.text.trim(),
-              password: passwordController.text.trim());
+  String name = '';
+  String email = '';
+  String password = '';
+  String role = 'Patient'; // default
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCred.user!.uid)
-          .set({
-        'email': emailController.text.trim(),
-        'name': nameController.text.trim(),
-        'role': role,
-      });
+  bool isLoading = false;
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => HomeScreen()),
+  void registerUser() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => isLoading = true);
+      String? error = await _authService.register(
+        name: name,
+        email: email,
+        password: password,
+        role: role,
       );
-    } catch (e) {
-      Fluttertoast.showToast(msg: "Error: $e");
+
+      setState(() => isLoading = false);
+
+      if (error != null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error)));
+      } else {
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => LoginScreen()));
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text('Register')),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(children: [
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(labelText: 'Full Name'),
-            ),
-            TextField(
-              controller: emailController,
-              decoration: InputDecoration(labelText: 'Email'),
-            ),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: InputDecoration(labelText: 'Password'),
-            ),
-            DropdownButton<String>(
-              value: role,
-              onChanged: (val) => setState(() => role = val!),
-              items: ['Patient', 'Doctor']
-                  .map((r) => DropdownMenuItem(value: r, child: Text(r)))
-                  .toList(),
-            ),
-            ElevatedButton(onPressed: register, child: Text("Register"))
-          ]),
-        ));
+      appBar: AppBar(title: Text("Register")),
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : Form(
+                key: _formKey,
+                child: ListView(
+                  children: [
+                    TextFormField(
+                      decoration: InputDecoration(labelText: 'Name'),
+                      onChanged: (val) => name = val,
+                      validator: (val) =>
+                          val!.isEmpty ? 'Enter your name' : null,
+                    ),
+                    TextFormField(
+                      decoration: InputDecoration(labelText: 'Email'),
+                      onChanged: (val) => email = val,
+                      validator: (val) =>
+                          val!.isEmpty ? 'Enter email' : null,
+                    ),
+                    TextFormField(
+                      decoration: InputDecoration(labelText: 'Password'),
+                      obscureText: true,
+                      onChanged: (val) => password = val,
+                      validator: (val) =>
+                          val!.length < 6 ? 'Password too short' : null,
+                    ),
+                    DropdownButtonFormField<String>(
+                      value: role,
+                      items: ['Doctor', 'Patient']
+                          .map((role) =>
+                              DropdownMenuItem(value: role, child: Text(role)))
+                          .toList(),
+                      onChanged: (val) => role = val!,
+                      decoration: InputDecoration(labelText: 'Role'),
+                    ),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                        onPressed: registerUser, child: Text("Register")),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(context,
+                            MaterialPageRoute(builder: (_) => LoginScreen()));
+                      },
+                      child: Text("Already have an account? Login"),
+                    )
+                  ],
+                ),
+              ),
+      ),
+    );
   }
 }
