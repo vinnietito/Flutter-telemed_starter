@@ -1,54 +1,57 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Register a new user
-  Future<User?> registerUser({
+  // Register
+  Future<String?> register({
     required String name,
     required String email,
     required String password,
     required String role,
   }) async {
     try {
-      UserCredential cred = await _auth.createUserWithEmailAndPassword(
-          email: email, password: password);
+      UserCredential userCred = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-      await _db.collection('users').doc(cred.user!.uid).set({
+      await _firestore.collection('users').doc(userCred.user!.uid).set({
+        'uid': userCred.user!.uid,
         'name': name,
         'email': email,
         'role': role,
+        'createdAt': FieldValue.serverTimestamp(),
       });
 
-      return cred.user;
-    } catch (e) {
-      rethrow;
+      return null; // no error
+    } on FirebaseAuthException catch (e) {
+      return e.message;
     }
   }
 
   // Login
-  Future<User?> loginUser({
-    required String email,
-    required String password,
-  }) async {
+  Future<Map<String, dynamic>?> login(String email, String password) async {
     try {
-      UserCredential cred = await _auth.signInWithEmailAndPassword(
-          email: email, password: password);
-      return cred.user;
-    } catch (e) {
-      rethrow;
+      UserCredential userCred = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      DocumentSnapshot userDoc = await _firestore
+          .collection('users')
+          .doc(userCred.user!.uid)
+          .get();
+
+      return userDoc.data() as Map<String, dynamic>;
+    } on FirebaseAuthException catch (e) {
+      return {'error': e.message};
     }
   }
 
-  // Logout
-  Future<void> logoutUser() async {
+  Future<void> logout() async {
     await _auth.signOut();
-  }
-
-  // Get current user
-  User? getCurrentUser() {
-    return _auth.currentUser;
   }
 }
